@@ -1,30 +1,46 @@
+/*
+ROBOT TRACKER IS A PROJECT TO TRACK AND MONITOR THE MOTION
+USING ARDUINO ADN 1SHEELD. 
+CODE IMPLEMENTED BY MAHMOUD AYMAN <mahmoud.ayman@gmail.com>
+ALL COPYRIGHTS RESERVED, THIS CODE WAS PUBLISHED IN THE PUBLIC DOMAIN
+THIS IDEA OF THIS PROJECT IS TO CAPTURE THE VALUES OF THE SENSORS OF YOUR
+SMARTPHONE USING 1SHEELD AND USE THE ARDUINO MAP THE MOTION OF THE ROBOT
+FOLLOW THE COMMENTS
+*/
+
+
 #include <OneSheeld.h>
 
 
-float Orient_x[100];
-float acce_y[100];
-int state =-1;
-int dir =0;
-int index =0;
-int index1=0;
-int acc_n=200;
-int s=335;
-int sw=29;
-int w=61;
-int nw=124;
+float Orient_x[100];  //array to save the data of mapping
+float acce_y[100];    //array to save different values of acceleration
+
+int state =-1;    //state of the keybad (1 or 2 pressed)      
+
+int index =0;    //index value for Orient_x array
+int index1=0;    //index value for acce_y array
+
+int acc_n=200;    //intial value of the accelerometer
+
+int s=335;        //intial values for orientation sensor, entered in intialization
+int sw=29;        // n--> north, ne---> northease, nw-->northwest
+int w=61;         // s--> south, se---> southeast, sw--->southwest
+int nw=124;      //e--> east, w--> west
 int n=159;
 int ne=201;
 int e=245;
 int se=298;
 
-int orient_val=0;
-int previous_dir=0;
-int current_dir=0;
-int Orient_tolerance = 10;
-int Acce_tolerance=300;
+int orient_val=0;  //current value of orientation sensor
+int previous_dir=0;   //the current direction of the robot
+int current_dir=0;    //the previous direction of the robot
+int Orient_tolerance = 10;    //tolerance value of the orientation sensor
+int Acce_tolerance=300;       //tolerance value of the accelerometer
 int check=0;
-unsigned long current_time=0;
+unsigned long current_time=0;  //value to store time
 
+//function to check value of orientation sensor
+//return true if the val in the range of the currennt direction, otherwise returns false
 boolean inRange (int x, int val)
 {
   if (val >= x-Orient_tolerance && val <= x+Orient_tolerance)
@@ -37,6 +53,9 @@ boolean inRange (int x, int val)
   }
 }
 
+//function to compute the distance covered in certain direction
+//takes two arguments, time and acceleration
+//returns the distance in cm
 float distance (unsigned long x, float acc)
 {
   float test = float(0.5*acc*(float(x)/1000)*(float(x)/1000));
@@ -44,6 +63,9 @@ float distance (unsigned long x, float acc)
   return test;
 }
 
+//function to get the average acceleration
+//takes two arguments array of accelerometer values and number of elements in the array
+//return the average acceleration in cm/s^2
 float average (float x[],int n)
 {
   float temp= 0.0;
@@ -57,6 +79,7 @@ float average (float x[],int n)
   return ((temp/n)-acc_n);
 }
 
+//function to add the value of the acceleration to Orient_x array
 void getA ()
 {
   Orient_x[index]=average(acce_y,index1+1);
@@ -66,6 +89,7 @@ void getA ()
   index1=0;
 }
 
+//function to add the Time of the acceleration to Orient_x array
 void getT()
 {
   Orient_x[index]=(millis()-current_time)-1000;
@@ -74,6 +98,7 @@ void getT()
   current_time=millis();
 }
 
+//function to add the Distance of the acceleration to Orient_x array
 void getD()
 {
   Orient_x[index]=abs(distance(Orient_x[index-1],Orient_x[index-2]));
@@ -81,6 +106,7 @@ void getD()
   index++;
 }
 
+//function update Orient_x array
 void updateOrient(int x)
 {
   Orient_x[index] = x ;
@@ -90,6 +116,7 @@ void updateOrient(int x)
   previous_dir=current_dir;
 }
 
+//function acce_y array
 void updateAcce ()
 {
   if (index1 < 100)
@@ -116,6 +143,7 @@ void updateAcce ()
 
 void setup ()
 {
+  //begin communication with 1sheeld
   OneSheeld.begin();
     
 }
@@ -142,8 +170,10 @@ void loop()
   //take_action
   if (state==1)
   {
+    //capture the value of Orientation sensor
     orient_val=OrientationSensor.getX();
-    //Serial.println(orient_val);
+    
+    //check direction
     if (inRange(n,orient_val))
     {
       current_dir=8;
@@ -322,7 +352,7 @@ void loop()
     }
     //orient_val=0;
   }
-  
+  //print Orient_x array
   else if (state == 2)
   {
     getA();
